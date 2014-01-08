@@ -29,6 +29,12 @@ Or show overlaid brains
 
 You can play around with the color maps and intensity ranges on the Papaya_ javascript interface.
 
+Also, some files are created in the directory of your notebook to make it work. When you're done, clean up:
+
+    clear_brain()
+
+The file papaya_viewer.html and the papaya_data folder are deleted.
+
 
 Troubleshoot
 ------------
