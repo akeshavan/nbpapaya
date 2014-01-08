@@ -17,18 +17,15 @@ Use
 
 Open a new IPython_ notebook
 
-.. code:: Python
-from nbpapaya import Brain, clear_brain
+    from nbpapaya import Brain, clear_brain
 
 Then show a brain:
 
-.. code:: Python
-Brain("/path/to/your/brain.nii",port=<your ipython notebook port. Default is 8888>)
+    Brain("/path/to/your/brain.nii",port=<your ipython notebook port. Default is 8888>)
 
 Or show overlaid brains
 
-.. code:: Python
-Brain(["/path/to/brain1.nii","/path/to/brain2.nii"],8888)
+    Brain(["/path/to/brain1.nii","/path/to/brain2.nii"],8888)
 
 You can play around with the color maps and intensity ranges on the Papaya_ javascript interface.
 
