@@ -4,7 +4,7 @@ from nipype.utils.filemanip import split_filename
 
 class Brain(object):
     def _repr_html_(self):
-        return """<iframe src="http://localhost:%d/viewer.html" 
+        return """<iframe src="http://localhost:%d/files/viewer.html" 
                    width="600" 
                    height="450" 
                    scrolling="no" 
@@ -47,8 +47,8 @@ class Brain(object):
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-        <link rel="stylesheet" type="text/css" href="papaya.css?version=0.6.2&build=512" />
-        <script type="text/javascript" src="papaya.js?version=0.6.2&build=512"></script>
+        <link rel="stylesheet" type="text/css" href="/static/custom/papaya.css?version=0.6.2&build=512" />
+        <script type="text/javascript" src="/static/custom/papaya.js?version=0.6.2&build=512"></script>
     
         <title>Papaya Viewer</title>
     
@@ -74,7 +74,7 @@ class Brain(object):
         
         return html
     
-    def __init__(self,fnames,port=8000):
+    def __init__(self,fnames,port=8888):
         
         if not isinstance(fnames,list):
             fnames = [fnames]
