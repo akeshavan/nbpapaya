@@ -3,13 +3,14 @@ import shutil
 from nipype.utils.filemanip import split_filename
 
 class Brain(object):
+
     def _repr_html_(self):
-        return """<iframe src="http://localhost:%d/files/viewer.html" 
+        return """<iframe src="http://localhost:%d/files/papaya_data/viewer_%02d.html"
                    width="600" 
                    height="450" 
                    scrolling="no" 
                    frameBorder="0">
-                   </iframe>"""%self._port
+                   </iframe>"""%(self._port,self._num)
     
     def _do_checks(self):
         if not os.path.exists(os.path.join(self.home_dir,"papaya.js")):
@@ -23,14 +24,14 @@ class Brain(object):
     def _symlink_files(self,fnames):
         for i,f in enumerate(fnames):
             path, name, ext = split_filename(f)
-            newname = os.path.join("papaya_data",'%s_%02d%s'%(name,i,ext))
+            newname = '%s_%02d_%02d%s'%(name,self._num,i,ext)
             try:
-                os.readlink(newname)
-                os.remove(newname)
+                os.readlink(os.path.join('papaya_data',newname))
+                os.remove(os.path.join('papaya_data',newname))
             except OSError:
                 pass
             
-            os.symlink(f,newname)
+            os.symlink(f,os.path.join('papaya_data',newname))
             self.file_names.append(newname)
             
             
@@ -68,14 +69,14 @@ class Brain(object):
 </html> 
         """%str(self.file_names)
         
-        foo = open("viewer.html",'w')
+        foo = open("papaya_data/viewer_%02d.html"%self._num,'w')
         foo.write(html)
         foo.close()
         
         return html
     
-    def __init__(self,fnames,port=8888):
-        
+    def __init__(self,fnames,port=8888,num=0):
+        self._num = num
         if not isinstance(fnames,list):
             fnames = [fnames]
         self._port = port
@@ -91,9 +92,9 @@ class Brain(object):
         self._edit_html()
         
 def clear_brain():
-    """Remove all the files the Brain object made to show you things."""
-    if os.path.exists(os.path.abspath("viewer.html")):
-        os.remove(os.path.abspath("viewer.html"))
+    """Remove all the files the Brain object made to show you things.
+    You must re-run all cells to reload the data"""
+
     if os.path.exists(os.path.abspath("papaya_data")):
         shutil.rmtree(os.path.abspath("papaya_data"))
 
