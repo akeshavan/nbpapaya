@@ -1,17 +1,43 @@
 import os
 import shutil
+import weakref
+from json import dumps as json
+from tempfile import mktemp, NamedTemporaryFile
+from warnings import warn
 from nipype.utils.filemanip import split_filename
+
+open_brains = weakref.WeakValueDictionary()
+
+def _parse_options(file_names, options, image_options):
+    if options is None:
+        options_json = "";
+    else:
+        opt = []
+        for option_name, value in options.items():
+            line = "params['{}'] = {};".format(option_name, json(value))
+            opt.append(line)
+        options_json = "\n".join(opt)
+
+    if image_options is None:
+        image_options_json = ""
+    else:
+        opt = []
+        for file, image_options in zip(file_names, image_options):
+            line = "params['{}'] = {};".format(file, json(image_options))
+            opt.append(line)
+        image_options_json = "\n".join(opt)
+    return options_json, image_options_json
 
 class Brain(object):
 
     def _repr_html_(self):
-        return """<iframe src="http://localhost:%d/files/papaya_data/viewer_%02d.html"
-                   width="600" 
-                   height="450" 
-                   scrolling="no" 
+        return """<iframe src="http://localhost:%d/files/papaya_data/%s.html"
+                   width="%d"
+                   height="%d"
+                   scrolling="no"
                    frameBorder="0">
-                   </iframe>"""%(self._port,self._num)
-    
+                   </iframe>"""%(self._port, self.objid, self.width, self.height)
+
     def _do_checks(self):
         if not os.path.exists(os.path.join(self.home_dir,"papaya.js")):
             shutil.copyfile(os.path.join(os.path.split(__file__)[0],"papaya.js"),os.path.join(self.home_dir,"papaya.js"))
@@ -19,23 +45,18 @@ class Brain(object):
             shutil.copyfile(os.path.join(os.path.split(__file__)[0],"papaya.css"),os.path.join(self.home_dir,"papaya.css"))
         if not os.path.exists(os.path.abspath("./papaya_data")):
             os.mkdir(os.path.abspath("./papaya_data"))
-        
-    
-    def _symlink_files(self,fnames):
+
+    def _symlink_files(self, fnames):
         for i,f in enumerate(fnames):
             path, name, ext = split_filename(f)
-            newname = '%s_%02d_%02d%s'%(name,self._num,i,ext)
-            try:
-                os.readlink(os.path.join('papaya_data',newname))
-                os.remove(os.path.join('papaya_data',newname))
-            except OSError:
-                pass
-            
-            os.symlink(f,os.path.join('papaya_data',newname))
-            self.file_names.append(newname)
-            
-            
-    def _edit_html(self):
+            link = mktemp(suffix=ext, dir="papaya_data")
+            os.symlink(f, link)
+            _, name, _ = split_filename(link)
+            self.file_names[name + ext] = link
+
+    def _edit_html(self, options, image_options):
+        opt_json, imgopt_json = _parse_options(self.file_names, options, image_options)
+
         html = """
         <!DOCTYPE html>
 
@@ -55,7 +76,9 @@ class Brain(object):
     
         <script type="text/javascript">
                 var params = [];
-                params["images"] = %s;
+                params["images"] = {images};
+                {options}
+                {image_options}
         </script>
 </head>
 
@@ -67,30 +90,61 @@ class Brain(object):
         </div>
     </body>
 </html> 
-        """%str(self.file_names)
-        
-        foo = open("papaya_data/viewer_%02d.html"%self._num,'w')
-        foo.write(html)
-        foo.close()
-        
+        """
+        html = html.format(images=json(self.file_names.keys()),
+                           options=opt_json,
+                           image_options=imgopt_json)
+
+        file = NamedTemporaryFile(suffix=".html", dir="papaya_data")
+        file.write(html)
+        # Do not close because it'll delete the file
+        file.flush()
+        self._html_file = file
+        path, name, ext = split_filename(file.name)
+        self.objid = name
+
         return html
     
-    def __init__(self,fnames,port=8888,num=0):
-        self._num = num
-        if not isinstance(fnames,list):
+    def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
+                 width=600, height=450):
+        self._html_file = None
+        self.file_names = {}
+        if not isinstance(fnames, list):
             fnames = [fnames]
+        if isinstance(image_options, dict):
+            image_options = [image_options] * len(fnames)
+        elif image_options is not None:
+            if len(image_options) != len(fnames):
+                raise ValueError("If you specify image_options as a list, you "
+                                 "specify image_options for each image.")
         self._port = port
+        self.width = width
+        self.height = height
         self.home_dir = os.path.join(os.path.expanduser("~"),".ipython/profile_default/static/custom/")
-        self.file_names = []
-        #Check that the viewer.html, papaya.js and papaya.css templates are in the right spot
+        # Check that the papaya_data exists and [temp].html, papaya.js and
+        # papaya.css templates are in the right spot. papaya_data is used by
+        # _symlink_files
         self._do_checks()
-        
-        #symlink our files to a place where the viewer can access it
+
+        # symlink our files to a place where the viewer can access it
+        # Sets self.file_names for use by _edit_html
         self._symlink_files(fnames)
-        
+
         #edit viewer.html to point to our files
-        self._edit_html()
-        
+        self._edit_html(options, image_options)
+        open_brains[self.objid] = self
+
+    def __del__(self):
+        for name, link in self.file_names.items():
+            try:
+                os.remove(link)
+            except OSError:
+                warn("Could not delete %s @ %s" % (name, link))
+            if self._html_file is not None:
+                self._html_file.close()
+                self._html_file = None
+
+
 def clear_brain():
     """Remove all the files the Brain object made to show you things.
     You must re-run all cells to reload the data"""
