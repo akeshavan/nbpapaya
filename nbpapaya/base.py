@@ -90,7 +90,7 @@ class ViewerBase(object):
 class Brain(ViewerBase):
         def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
                      width=600, height=450):
-            super(Brain2,self).__init__(fnames, port=8888, num=None, options=None, image_options=None,
+            super(Brain,self).__init__(fnames, port=8888, num=None, options=None, image_options=None,
                      width=600, height=450)
                      
             #edit viewer.html to point to our files
