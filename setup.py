@@ -7,10 +7,12 @@ setup(name='nbpapaya',
       author_email='akeshavan@ucla.edu',
       url=None,
       packages=['nbpapaya'],
+      include_package_data=True,
       package_data={"nbpapaya":["papaya.js",
                                "papaya.css",
                                "three.js/build/*",
-                               "three.js/libs/stats.min.js"
-                               "three.js/examples/js/loaders/*/*/*",
-                               "three.js/examples/js/controls/TrackballControls.js"]}
+                               "three.js/libs/stats.min.js",
+                               "three.js/examples/js/controls/TrackballControls.js",
+                               "three.js/examples/js/loaders/VTKLoader.js",
+                               ]}
      )
