@@ -19,11 +19,11 @@ class ViewerBase(object):
     def _do_checks(self):
         print "doing checks", self.home_dir
         if not os.path.exists(os.path.join(self.home_dir,"papaya.js")):
-            shutil.copyfile(os.path.join(os.path.split(__file__)[0],"papaya.js"),
+            shutil.copyfile(os.path.join(os.path.split(__file__)[0],"Papaya/release/current/minimal/papaya.js"),
             os.path.join(self.home_dir,"papaya.js"))
             
         if not os.path.exists(os.path.join(self.home_dir,"papaya.css")):
-            shutil.copyfile(os.path.join(os.path.split(__file__)[0],"papaya.css"),
+            shutil.copyfile(os.path.join(os.path.split(__file__)[0],"Papaya/release/current/minimal/papaya.css"),
             os.path.join(self.home_dir,"papaya.css"))
             
         if not os.path.exists(os.path.abspath("./papaya_data")):
@@ -90,7 +90,7 @@ class ViewerBase(object):
 class Brain(ViewerBase):
         def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
                      width=600, height=450):
-            super(Brain,self).__init__(fnames, port=8888, num=None, options=None, image_options=None,
+            super(Brain,self).__init__(fnames, port, num, options, image_options,
                      width=600, height=450)
                      
             #edit viewer.html to point to our files
@@ -152,8 +152,8 @@ class Brain(ViewerBase):
 class Surface(ViewerBase):
     def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
                  width=600, height=450):
-        super(Surface, self).__init__(fnames, port=8888, num=None, options=None, image_options=None,
-                 width=600, height=450)
+        super(Surface, self).__init__(fnames, port, num, options, image_options,
+                 width, height)
                  
         self._edit_html(options, image_options)
         open_brains[self.objid] = self

@@ -1,3 +1,6 @@
 [submodule "nbpapaya/three.js"]
 	path = nbpapaya/three.js
 	url = https://github.com/mrdoob/three.js
+[submodule "nbpapaya/Papaya"]
+	path = nbpapaya/Papaya
+	url = https://github.com/rii-mango/Papaya
