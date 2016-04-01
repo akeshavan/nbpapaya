@@ -67,7 +67,7 @@ class ViewerBase(object):
         self._port = port
         self.width = width
         self.height = height
-        self.home_dir = os.path.join(os.path.expanduser("~"),".ipython/profile_default/static/custom/")
+        self.home_dir = os.path.join(os.path.expanduser("~"),".jupyter/custom/")
         # Check that the papaya_data exists and [temp].html, papaya.js and
         # papaya.css templates are in the right spot. papaya_data is used by
         # _symlink_files
@@ -112,9 +112,9 @@ class Brain(ViewerBase):
             <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
             <meta name="apple-mobile-web-app-capable" content="yes">
             <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-            <link rel="stylesheet" type="text/css" href="/static/custom/papaya.css?version=0.6.2&build=512" />
-            <script type="text/javascript" src="/static/custom/papaya.js?version=0.6.2&build=512"></script>
+            <script src="https://code.jquery.com/jquery-2.2.2.min.js" integrity="sha256-36cp2Co+/62rEAAYHLmRCPIych47CvdM+uTBJwSzWjI=" crossorigin="anonymous"></script>
+            <link rel="stylesheet" type="text/css" href="/custom/papaya.css?version=0.6.2&build=51212345" />
+            <script type="text/javascript" src="/custom/papaya.js?version=0.6.2&build=51212345"></script>
     
             <title>Papaya Viewer</title>
     
@@ -183,9 +183,9 @@ class Surface(ViewerBase):
          
          <body ng-app="visApp">
 
-             <script src="/static/custom/three.min.js"></script>
-             <script src="/static/custom/VTKLoader.js"></script>
-             <script src="/static/custom/TrackballControls.js"></script>
+             <script src="/custom/three.min.js"></script>
+             <script src="/custom/VTKLoader.js"></script>
+             <script src="/custom/TrackballControls.js"></script>
 
              <script>
              //if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
