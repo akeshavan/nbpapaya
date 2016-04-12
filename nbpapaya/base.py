@@ -9,12 +9,19 @@ from .brain_view import split_filename, _parse_options, open_brains
 class ViewerBase(object):
 
     def _repr_html_(self):
-        return """<iframe src="http://localhost:%d/files/papaya_data/%s.html"
-                   width="%d"
-                   height="%d"
-                   scrolling="no"
-                   frameBorder="0">
-                   </iframe>"""%(self._port, self.objid, self.width, self.height)
+        return """
+            <script type="text/javascript">
+                var nb_port = window.location.port;
+                var iframe = document.querySelector('iframe#{objid}');
+                iframe.src="http://localhost:" + nb_port + "/files/papaya_data/{objid}.html";
+            </script>
+            <iframe
+            id="{objid}"
+            width="{width}"
+            height="{height}"
+            scrolling="no"
+            frameBorder="0">
+            </iframe>""".format(objid = self.objid, width = self.width, height = self.height)
 
     def _do_checks(self):
         print "doing checks", self.home_dir
@@ -52,7 +59,7 @@ class ViewerBase(object):
             _, name, _ = split_filename(link)
             self.file_names[name + ext] = link
             
-    def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
+    def __init__(self, fnames, num=None, options=None, image_options=None,
                  width=600, height=450):
         self._html_file = None
         self.file_names = {}
@@ -64,7 +71,6 @@ class ViewerBase(object):
             if len(image_options) != len(fnames):
                 raise ValueError("If you specify image_options as a list, you "
                                  "specify image_options for each image.")
-        self._port = port
         self.width = width
         self.height = height
         self.home_dir = os.path.join(os.path.expanduser("~"),".ipython/profile_default/static/custom/")
@@ -88,9 +94,9 @@ class ViewerBase(object):
                 self._html_file = None
         
 class Brain(ViewerBase):
-        def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
+        def __init__(self, fnames, num=None, options=None, image_options=None,
                      width=600, height=450):
-            super(Brain,self).__init__(fnames, port, num, options, image_options,
+            super(Brain,self).__init__(fnames, num, options, image_options,
                      width=600, height=450)
                      
             #edit viewer.html to point to our files
@@ -150,9 +156,9 @@ class Brain(ViewerBase):
             return html
         
 class Surface(ViewerBase):
-    def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
+    def __init__(self, fnames, num=None, options=None, image_options=None,
                  width=600, height=450):
-        super(Surface, self).__init__(fnames, port, num, options, image_options,
+        super(Surface, self).__init__(fnames, num, options, image_options,
                  width, height)
                  
         self._edit_html(options, image_options)
