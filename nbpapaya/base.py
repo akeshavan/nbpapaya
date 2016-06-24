@@ -18,12 +18,14 @@ class ViewerBase(object):
 
     def _do_checks(self):
         print "doing checks", self.home_dir
+        if not os.path.exists(self.home_dir):
+            os.makedirs(self.home_dir)
         if not os.path.exists(os.path.join(self.home_dir,"papaya.js")):
-            shutil.copyfile(os.path.join(os.path.split(__file__)[0],"Papaya/release/current/minimal/papaya.js"),
+            shutil.copyfile(os.path.join(os.path.split(__file__)[0],"Papaya/release/current/standard/papaya.js"),
             os.path.join(self.home_dir,"papaya.js"))
             
         if not os.path.exists(os.path.join(self.home_dir,"papaya.css")):
-            shutil.copyfile(os.path.join(os.path.split(__file__)[0],"Papaya/release/current/minimal/papaya.css"),
+            shutil.copyfile(os.path.join(os.path.split(__file__)[0],"Papaya/release/current/standard/papaya.css"),
             os.path.join(self.home_dir,"papaya.css"))
             
         if not os.path.exists(os.path.abspath("./papaya_data")):
