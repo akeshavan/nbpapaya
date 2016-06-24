@@ -84,5 +84,17 @@ def clear_brain():
     if os.path.exists(os.path.abspath("papaya_data")):
         shutil.rmtree(os.path.abspath("papaya_data"))
 
-
+def get_example_data():
+    vtk = "http://roygbiv.mindboggle.info/data/mindboggled/Twins-2-1/labels/left_cortical_surface/freesurfer_cortex_labels.vtk"
+    nifti = ""
+    from subprocess import check_call
+    import os
+    
+    folder = os.path.abspath("nppapaya_example_data")
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    cmd = ["wget", vtk]
+    check_call(cmd, cwd=folder)
+    
+    
 

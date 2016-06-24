@@ -47,12 +47,16 @@ class ViewerBase(object):
             
 
     def _symlink_files(self, fnames):
+        tmp_files = {}
         for i,f in enumerate(fnames):
             path, name, ext = split_filename(f)
             link = mktemp(suffix=ext, dir="papaya_data")
             os.symlink(f, link)
             _, name, _ = split_filename(link)
-            self.file_names[name + ext] = link
+            #self.file_names[name + ext] = link
+            tmp_files[name+ext] = link
+        print tmp_files
+        return tmp_files    
             
     def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
                  width=600, height=450, host="localhost"):
@@ -78,7 +82,7 @@ class ViewerBase(object):
 
         # symlink our files to a place where the viewer can access it
         # Sets self.file_names for use by _edit_html
-        self._symlink_files(fnames)
+        self.file_names = self._symlink_files(fnames)
         
     def __del__(self):
         for name, link in self.file_names.items():
