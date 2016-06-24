@@ -48,6 +48,7 @@ class ViewerBase(object):
 
     def _symlink_files(self, fnames):
         tmp_files = {}
+        mapper = {}
         for i,f in enumerate(fnames):
             path, name, ext = split_filename(f)
             link = mktemp(suffix=ext, dir="papaya_data")
@@ -55,8 +56,9 @@ class ViewerBase(object):
             _, name, _ = split_filename(link)
             #self.file_names[name + ext] = link
             tmp_files[name+ext] = link
+            mapper[f] = link
         print tmp_files
-        return tmp_files    
+        return tmp_files, mapper    
             
     def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
                  width=600, height=450, host="localhost"):
@@ -64,12 +66,7 @@ class ViewerBase(object):
         self.file_names = {}
         if not isinstance(fnames, list):
             fnames = [fnames]
-        if isinstance(image_options, dict):
-            image_options = [image_options] * len(fnames)
-        elif image_options is not None:
-            if len(image_options) != len(fnames):
-                raise ValueError("If you specify image_options as a list, you "
-                                 "specify image_options for each image.")
+
         self._port = port
         self._host = host
         self.width = width
@@ -82,7 +79,7 @@ class ViewerBase(object):
 
         # symlink our files to a place where the viewer can access it
         # Sets self.file_names for use by _edit_html
-        self.file_names = self._symlink_files(fnames)
+        self.file_names, self._mapper = self._symlink_files(fnames)
         
     def __del__(self):
         for name, link in self.file_names.items():
@@ -101,6 +98,14 @@ class Brain(ViewerBase):
                      width=600, height=450, host=host)
                      
             #edit viewer.html to point to our files
+            
+            if isinstance(image_options, dict):
+                image_options = [image_options] * len(fnames)
+            elif image_options is not None:
+                if len(image_options) != len(fnames):
+                    raise ValueError("If you specify image_options as a list, you "
+                                 "specify image_options for each image.")
+            
             self._edit_html(options, image_options)
             open_brains[self.objid] = self
                      
@@ -325,6 +330,304 @@ class Surface(ViewerBase):
         """
         
         html = html.format(images=json(self.file_names.keys()))
+        file = NamedTemporaryFile(suffix=".html", dir="papaya_data")
+        file.write(html)
+        # Do not close because it'll delete the file
+        file.flush()
+        self._html_file = file
+        path, name, ext = split_filename(file.name)
+        self.objid = name
+
+        return html
+
+class Overlay(ViewerBase):
+    def __init__(self, image_options, port=8888, num=None, options=None, 
+                        width=600, height=450, host="localhost"):
+                            
+        fnames = image_options.keys()
+                           
+        super(Overlay, self).__init__(fnames, port, num, options, image_options,
+                 width, height, host)
+        
+        new_mapper = {}
+        for key, value in self._mapper.iteritems():
+            newkey = "http://{}:{}/files/{}".format(self._host,self._port,value)
+            new_mapper[newkey] = image_options[key]
+            new_mapper[newkey]["filename"] = self._symlink_files([image_options[key]["filename"]])[1].values()[0]
+        
+        self._javascript_object = new_mapper    
+        
+        print image_options, new_mapper
+        
+                 
+        self._edit_html(options, image_options)
+        open_brains[self.objid] = self
+         
+    def _edit_html(self,options,image_options):
+        
+        html = """<html lang="en">
+       <head>
+         <title>three.js webgl - loaders - vtk loader</title>
+ 
+         <meta charset="utf-8">
+         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+ 
+         <style>
+     		html, body {
+     		  background-color:#000;
+     		  margin: 0;
+     		  padding: 0;
+     		  overflow: hidden !important;  
+     		}
+	
+     	</style>   
+         
+         <body ng-app="visApp">
+
+            
+
+             <script src="/custom/three.min.js"></script>
+             <script src="/custom/VTKLoader.js"></script>
+             <script src="/custom/TrackballControls.js"></script>
+             <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+             <script src="https://rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script>
+
+             <script>
+             //if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+                 var stats;
+
+                 var camera, controls, scene, renderer;
+
+                 var cross;
+
+                 var objects = [];
+
+                 var meshes = [];
+				
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				
+				var MeshOpts =  IPYTHON_NOTEBOOK_DICTIONARY;
+                
+                var initialize_gui = function(mesh){
+                    var gui = new dat.GUI();
+                    var meshgui = gui.addFolder(mesh.name);
+                    var tmp = mesh.anisha_opts
+                    var colormin = gui.addColor(tmp, 'colormin');
+                    var colormax = gui.addColor(tmp, 'colormax');
+                    var vmin = gui.add(tmp, 'vmin');
+                    var vmax = gui.add(tmp, 'vmax');
+                    //var threshold = gui.add(tmp, 'threshold', 0, 5);
+                    var key = gui.add(tmp, "key", tmp.key_options)
+                    
+                    var changer = function(value){
+                        console.log("this is", this)
+                        console.log("mesh is", mesh)
+                        
+                        mesh.anisha_opts = this.object   
+                        console.log(mesh.anisha_opts)
+                        color_brain(mesh)
+                    }
+                    
+                    colormin.onChange(changer)
+                    colormax.onChange(changer)
+                    vmin.onChange(changer)
+                    vmax.onChange(changer)
+                    key.onChange(changer)
+                    //threshold.onChange(changer)
+                    
+                    gui.open();
+
+                    
+                
+                }
+				
+				var get_mesh_by_name = function(meshes, name){
+    				console.log("meshes", meshes)
+    				var N = meshes.length
+    				
+    				for (i=0;i<N;i++){
+        				
+        				var to_match = MeshOpts[meshes[i].name].filename
+        				console.log("finding mesh", meshes[i].name, to_match)
+        				if (meshes[i].name==to_match){
+            				
+            				return meshes[i]
+        				}
+    				}
+    				
+				}
+				
+				var color_brain= function(mesh){
+                    var mesh_options = mesh.anisha_opts
+                    
+                    //if (meshkeys.indexOf(mesh.name) >= 0)
+                        csv_filename = mesh_options["filename"]
+                        console.log("csv filename", csv_filename)
+                        console.log("coloring brain for", mesh)
+                        //var mesh_options = options[mesh.name]
+                        d3.csv(csv_filename, function(csv){
+                                            
+                                                console.log("csv is", csv)
+                                                var face_metrics = [] 
+                                                var key = mesh_options.key
+                                                mesh.geometry.faces.forEach(function(element, index, array){
+                                        		var vals = parseFloat(csv[element["a"]][key]) + parseFloat(csv[element["b"]][key]) + parseFloat(csv[element["c"]][key])
+                                                //vals is the average value of the "key"(travel depth, geodesic depth, etc) for the 3 vertices of the face
+                                                // anisha: I have no idea if this is the right thing to do
+                                        		face_metrics.push(vals/3)
+                                    		    });
+                                    		    //console.log("face_metrics", face_metrics)
+                                    		    var colorgrad = d3.scale.linear()
+                                                        .domain([mesh_options.vmin, mesh_options.vmax]) //[_.min(face_metrics), _.max(face_metrics)])
+                                                        .range([mesh_options.colormin, mesh_options.colormax]);
+                                                
+                                                //console.log(face_metrics[0], colorgrad(face_metrics[0]))
+                                        		
+                                        		mesh.geometry.faces.forEach(function(element, index, array){
+                                            		//if (face_metrics[index]>mesh_options.threshold){
+                                            		var col = new THREE.Color(colorgrad(face_metrics[index]))
+                                            		element.color.setRGB(col.r, col.g, col.b)//}
+                                                //ak: how do we undo the color setting if we change the threshold??            
+                                            		
+                                        		})
+                                        		mesh.geometry.colorsNeedUpdate = true
+                                            
+                                        })
+                    
+                    
+                }
+				
+   			  	function init(){
+     	        console.log(window.innerWidth,window.innerHeight);
+     	        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 1e10 );
+     	        camera.position.z = 120;
+
+     	        controls = new THREE.TrackballControls( camera, container );
+
+     	        controls.rotateSpeed = 5.0;
+     	        controls.zoomSpeed = 5;
+     	        controls.panSpeed = 2;
+
+     	        controls.noZoom = false;
+     	        controls.noPan = false;
+
+     	        controls.staticMoving = true;
+     	        controls.dynamicDampingFactor = 0.3;
+
+     	        scene = new THREE.Scene();
+
+     	        scene.add( camera );
+
+     	        // light
+
+     	        var dirLight = new THREE.DirectionalLight( 0xffffff );
+     	        dirLight.position.set( 200, 200, 1000 ).normalize();
+
+     	        camera.add( dirLight );
+     	        camera.add( dirLight.target );
+
+     	        var material = new THREE.MeshLambertMaterial( { color:0xffffff, side: THREE.DoubleSide } );
+
+     	        var loader = new THREE.VTKLoader();
+                 
+                var loadMesh = function(name) {
+                 					var oReq = new XMLHttpRequest();
+                 					oReq.open("GET", name, true);
+                 					oReq.onload = function(oEvent) {
+                 						var buffergeometry=new THREE.VTKLoader().parse(this.response);
+					
+                 						geometry=new THREE.Geometry().fromBufferGeometry(buffergeometry);
+                 						geometry.computeFaceNormals();
+                 						geometry.computeVertexNormals();
+                 						geometry.__dirtyColors = true;
+							
+                 						material=new THREE.MeshLambertMaterial({vertexColors: THREE.FaceColors});
+                 						var color = [Math.random(), Math.random(), Math.random()]
+						    			//console.log("hello")
+                 						/*for (i=0;i<geometry.faces.length;i++){
+                 							var face = geometry.faces[i];
+                 							face.color.setHex( Math.random() * 0xffffff );
+                 							//face.color.setRGB(color[0],color[1],color[2]);
+						
+                 							//face.materials = [ new THREE.MeshBasicMaterial( { color: Math.random() * 0xffffff } ) ];
+                 						}
+                 						geometry.colorsNeedUpdate = true*/
+                 						mesh=new THREE.Mesh(geometry,material);
+                 						mesh.dynamic=true
+                 						mesh.name = name
+                 						//mesh.name = name
+										
+                 				        mesh.rotation.y = Math.PI * 1.1;
+ 		                                mesh.rotation.x = Math.PI * 0.5;
+ 		                                mesh.rotation.z = Math.PI * 1.5;
+ 		                                mesh.anisha_opts = MeshOpts[mesh.name]
+	
+                                        color_brain(mesh)
+                                        initialize_gui(mesh)
+                                        
+                 						
+                 						scene.add(mesh);
+                 						meshes.push(mesh)
+					
+                 					}
+                 					oReq.send();
+                 			}
+                 				
+                 
+                console.log("loading meshes")
+                files_to_load = Object.keys(MeshOpts)
+                
+                 for (i=0;i<files_to_load.length;i++){
+                    loadMesh(files_to_load[i])	
+					console.log("loaded mesh",i)
+					                 }
+
+        
+     	        // renderer
+
+     			renderer = new THREE.WebGLRenderer();
+     			 
+     	        renderer.setPixelRatio( window.devicePixelRatio );
+     	        renderer.setSize( window.innerWidth, window.innerHeight);
+				container.appendChild( renderer.domElement );
+				}
+				
+			    
+     	        //window.addEventListener( 'resize', onWindowResize, false );
+          
+             	var animate = function() {
+
+             	        requestAnimationFrame( animate );
+
+             	        controls.update();
+             	        renderer.render( scene, camera );
+						//console.log("rendered")
+	
+             	      }
+                       
+				init();
+
+                 
+                console.log("finished init")
+                 
+                
+                //var meshgui = gui.addFolder('Mesh');
+                
+
+                
+                
+                
+                
+             animate();
+             
+             </script>
+
+           </body>
+         </html>        """
+        
+        html = html.replace("IPYTHON_NOTEBOOK_DICTIONARY", json(self._javascript_object))
         file = NamedTemporaryFile(suffix=".html", dir="papaya_data")
         file.write(html)
         # Do not close because it'll delete the file
