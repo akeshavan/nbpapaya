@@ -9,12 +9,12 @@ from .brain_view import split_filename, _parse_options, open_brains
 class ViewerBase(object):
 
     def _repr_html_(self):
-        return """<iframe src="http://localhost:%d/files/papaya_data/%s.html"
+        return """<iframe src="http://%s:%d/files/papaya_data/%s.html"
                    width="%d"
                    height="%d"
                    scrolling="no"
                    frameBorder="0">
-                   </iframe>"""%(self._port, self.objid, self.width, self.height)
+                   </iframe>"""%(self._host, self._port, self.objid, self.width, self.height)
 
     def _do_checks(self):
         print "doing checks", self.home_dir
@@ -53,7 +53,7 @@ class ViewerBase(object):
             self.file_names[name + ext] = link
             
     def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
-                 width=600, height=450):
+                 width=600, height=450, host="localhost"):
         self._html_file = None
         self.file_names = {}
         if not isinstance(fnames, list):
@@ -65,6 +65,7 @@ class ViewerBase(object):
                 raise ValueError("If you specify image_options as a list, you "
                                  "specify image_options for each image.")
         self._port = port
+        self._host = host
         self.width = width
         self.height = height
         self.home_dir = os.path.join(os.path.expanduser("~"),".jupyter/custom/")
@@ -89,9 +90,9 @@ class ViewerBase(object):
         
 class Brain(ViewerBase):
         def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
-                     width=600, height=450):
+                     width=600, height=450, host="localhost"):
             super(Brain,self).__init__(fnames, port, num, options, image_options,
-                     width=600, height=450)
+                     width=600, height=450, host=host)
                      
             #edit viewer.html to point to our files
             self._edit_html(options, image_options)
@@ -151,9 +152,9 @@ class Brain(ViewerBase):
         
 class Surface(ViewerBase):
     def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
-                 width=600, height=450):
+                 width=600, height=450, host="localhost"):
         super(Surface, self).__init__(fnames, port, num, options, image_options,
-                 width, height)
+                 width, height, host)
                  
         self._edit_html(options, image_options)
         open_brains[self.objid] = self
