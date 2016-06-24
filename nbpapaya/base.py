@@ -353,7 +353,9 @@ class Overlay(ViewerBase):
         for key, value in self._mapper.iteritems():
             newkey = "http://{}:{}/files/{}".format(self._host,self._port,value)
             new_mapper[newkey] = image_options[key]
-            new_mapper[newkey]["filename"] = self._symlink_files([image_options[key]["filename"]])[1].values()[0]
+            new_mapper[newkey]["filename"] = "http://{}:{}/files/{}".format(self._host, 
+                                                                            self._port, 
+                                                                            self._symlink_files([image_options[key]["filename"]])[1].values()[0])
         
         self._javascript_object = new_mapper    
         
@@ -437,7 +439,7 @@ class Overlay(ViewerBase):
                     key.onChange(changer)
                     //threshold.onChange(changer)
                     
-                    gui.open();
+                    //gui.open();
 
                     
                 
