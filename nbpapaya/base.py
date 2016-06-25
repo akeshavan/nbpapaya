@@ -402,7 +402,7 @@ class Overlay(ViewerBase):
              <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
              <script src="https://rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script>
 
-             <script>
+<script>
              //if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
                  var stats;
@@ -414,14 +414,19 @@ class Overlay(ViewerBase):
                  var objects = [];
 
                  meshes = [];
+                 gui = new dat.GUI()
+                 var screenshot = { "Capture Image":function(){ window.open(renderer.domElement.toDataURL("image/png", "final")) }};
+
+                 gui.add(screenshot,'Capture Image');
+                 
 				
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 				
-				var MeshOpts =  IPYTHON_NOTEBOOK_DICTIONARY
+				var MeshOpts = IPYTHON_NOTEBOOK_DICTIONARY;
                 
                 var initialize_gui = function(mesh){
-                    var gui = new dat.GUI();
+                    //var gui = new dat.GUI();
                     var meshgui = gui.addFolder(mesh.name);
                     var tmp = mesh.anisha_opts
                     var colormin = gui.addColor(tmp, 'colormin');
@@ -641,7 +646,7 @@ class Overlay(ViewerBase):
         
      	        // renderer
 
-     			renderer = new THREE.WebGLRenderer();
+     			renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true});
      			 
      	        renderer.setPixelRatio( window.devicePixelRatio );
      	        renderer.setSize( window.innerWidth, window.innerHeight);
@@ -677,6 +682,7 @@ class Overlay(ViewerBase):
              animate();
              
              </script>
+
 
            </body>
          </html>
