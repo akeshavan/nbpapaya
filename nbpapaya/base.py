@@ -57,7 +57,7 @@ class ViewerBase(object):
             #self.file_names[name + ext] = link
             tmp_files[name+ext] = link
             mapper[f] = link
-        print tmp_files
+        #print tmp_files
         return tmp_files, mapper    
             
     def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
@@ -359,7 +359,7 @@ class Overlay(ViewerBase):
         
         self._javascript_object = new_mapper    
         
-        print image_options, new_mapper
+        #print image_options, new_mapper
         
                  
         self._edit_html(options, image_options)
@@ -367,7 +367,11 @@ class Overlay(ViewerBase):
          
     def _edit_html(self,options,image_options):
         
-        html = """<html lang="en">
+        html = """
+        
+
+     
+     <html lang="en">
        <head>
          <title>three.js webgl - loaders - vtk loader</title>
  
@@ -380,6 +384,10 @@ class Overlay(ViewerBase):
      		  margin: 0;
      		  padding: 0;
      		  overflow: hidden !important;  
+     		}
+     		
+     		div{
+         		width: 100%;
      		}
 	
      	</style>   
@@ -405,12 +413,12 @@ class Overlay(ViewerBase):
 
                  var objects = [];
 
-                 var meshes = [];
+                 meshes = [];
 				
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 				
-				var MeshOpts =  IPYTHON_NOTEBOOK_DICTIONARY;
+				var MeshOpts =  IPYTHON_NOTEBOOK_DICTIONARY
                 
                 var initialize_gui = function(mesh){
                     var gui = new dat.GUI();
@@ -420,15 +428,17 @@ class Overlay(ViewerBase):
                     var colormax = gui.addColor(tmp, 'colormax');
                     var vmin = gui.add(tmp, 'vmin');
                     var vmax = gui.add(tmp, 'vmax');
-                    //var threshold = gui.add(tmp, 'threshold', 0, 5);
+                    var threshold = gui.add(tmp, 'threshold', 0, 5);
                     var key = gui.add(tmp, "key", tmp.key_options)
+                    var mesh_transparency = gui.add(tmp, "mesh_transparency", 0, 1)
+                    var mesh_visible = gui.add(tmp, "mesh_visible")
                     
                     var changer = function(value){
-                        console.log("this is", this)
-                        console.log("mesh is", mesh)
+                        // console.log("this is", this)
+                        // console.log("mesh is", mesh)
                         
                         mesh.anisha_opts = this.object   
-                        console.log(mesh.anisha_opts)
+                        // console.log(mesh.anisha_opts)
                         color_brain(mesh)
                     }
                     
@@ -437,70 +447,110 @@ class Overlay(ViewerBase):
                     vmin.onChange(changer)
                     vmax.onChange(changer)
                     key.onChange(changer)
-                    //threshold.onChange(changer)
-                    
-                    //gui.open();
+                    threshold.onChange(changer)
+                    mesh_transparency.onChange(changer)
+                    mesh_visible.onChange(changer)
+                    gui.open();
 
                     
                 
                 }
 				
-				var get_mesh_by_name = function(meshes, name){
-    				console.log("meshes", meshes)
-    				var N = meshes.length
-    				
-    				for (i=0;i<N;i++){
-        				
-        				var to_match = MeshOpts[meshes[i].name].filename
-        				console.log("finding mesh", meshes[i].name, to_match)
-        				if (meshes[i].name==to_match){
-            				
-            				return meshes[i]
-        				}
-    				}
-    				
-				}
-				
-				var color_brain= function(mesh){
+
+                // Use CSV is a function that will remember csvs by filenames.  This will only
+                // go and get the file if the data for that particular filename has not yet been loaded.
+                var useCSV = (function(){
+                    var collectionOfCSVs = {};
+                    // Cache CSVs by their filename as they are loaded and call the callback function on
+                    // the csv data if/once loaded.
+
+                    return function(filename, callback){
+
+                        // if the csv data by this filename already exists...
+                        if (collectionOfCSVs[filename]){
+
+                            // use it
+                            callback(collectionOfCSVs[filename]);
+
+                        } else {
+                            d3.csv(filename, function(csv){
+                                // remember the data for this new csv
+                                collectionOfCSVs[filename] = csv;
+
+                                // use the csv data
+                                callback(csv)
+                            })
+                        }
+                    }
+
+                })();
+
+
+                // use mesh data and csv data to calculate and cache face_metrics for all possible
+                // keys on the faceMetrics argument.
+                var calculateFaceMetrics = function(mesh, callback){
                     var mesh_options = mesh.anisha_opts
-                    
-                    //if (meshkeys.indexOf(mesh.name) >= 0)
-                        csv_filename = mesh_options["filename"]
-                        console.log("csv filename", csv_filename)
-                        console.log("coloring brain for", mesh)
-                        //var mesh_options = options[mesh.name]
-                        d3.csv(csv_filename, function(csv){
-                                            
-                                                console.log("csv is", csv)
-                                                var face_metrics = [] 
-                                                var key = mesh_options.key
-                                                mesh.geometry.faces.forEach(function(element, index, array){
-                                        		var vals = parseFloat(csv[element["a"]][key]) + parseFloat(csv[element["b"]][key]) + parseFloat(csv[element["c"]][key])
-                                                //vals is the average value of the "key"(travel depth, geodesic depth, etc) for the 3 vertices of the face
-                                                // anisha: I have no idea if this is the right thing to do
-                                        		face_metrics.push(vals/3)
-                                    		    });
-                                    		    //console.log("face_metrics", face_metrics)
-                                    		    var colorgrad = d3.scale.linear()
-                                                        .domain([mesh_options.vmin, mesh_options.vmax]) //[_.min(face_metrics), _.max(face_metrics)])
-                                                        .range([mesh_options.colormin, mesh_options.colormax]);
-                                                
-                                                //console.log(face_metrics[0], colorgrad(face_metrics[0]))
-                                        		
-                                        		mesh.geometry.faces.forEach(function(element, index, array){
-                                            		//if (face_metrics[index]>mesh_options.threshold){
-                                            		var col = new THREE.Color(colorgrad(face_metrics[index]))
-                                            		element.color.setRGB(col.r, col.g, col.b)//}
-                                                //ak: how do we undo the color setting if we change the threshold??            
-                                            		
-                                        		})
-                                        		mesh.geometry.colorsNeedUpdate = true
-                                            
-                                        })
-                    
-                    
+                    var csv_filename = mesh_options["filename"]
+                    var keys = mesh_options.key_options;
+
+                    if(!mesh.face_metrics){
+                        mesh.face_metrics = {}
+                    }
+
+                    useCSV(csv_filename, function(csv){
+                        keys.forEach(function(key, index){
+                            if(mesh.face_metrics[key]){
+                                return;
+                            }
+
+                            mesh.face_metrics[key] = mesh.geometry.faces.map(function(element, index){
+                                var vals = parseFloat(csv[element["a"]][key]) + parseFloat(csv[element["b"]][key]) + parseFloat(csv[element["c"]][key])
+                                //vals is the average value of the "key"(travel depth, geodesic depth, etc) for the 3 vertices of the face
+                                // anisha: I have no idea if this is the right thing to do
+                                return vals/3;
+                            });
+
+                        });
+
+                        if(typeof callback === 'function'){
+                            callback(mesh);
+                        }
+                    });
                 }
-				
+
+
+                // Color brain depends on face_metrics being calculated once on initialization.
+                // This means that on change from the gui, color brain will only be going over each
+                // of the faces in the geometry and looking up what color it should set that face to.
+                // 
+                // Before, the csv was being reloaded each time and the face_metrics was recalculated each time.
+				var color_brain = function(mesh){
+                    var mesh_options = mesh.anisha_opts
+                    var key = mesh_options.key
+                    var face_metrics = mesh.face_metrics[key]
+
+                    mesh.material.transparent = true
+                    mesh.material.opacity = mesh_options.mesh_transparency
+                    mesh.visible = mesh_options.mesh_visible
+
+                    var colorgrad = d3.scale.linear()
+                        .domain([mesh_options.vmin, mesh_options.vmax])//[_.min(face_metrics), _.max(face_metrics)])
+                        .range([mesh_options.colormin, mesh_options.colormax]);
+
+                    mesh.geometry.faces.forEach(function(element, index){
+
+                        if (face_metrics[index] > mesh_options.threshold){
+                            var col = new THREE.Color(colorgrad(face_metrics[index]))
+                            element.color.setRGB(col.r, col.g, col.b)
+                        } else {
+                            // Undo the color setting by setting it back to white.
+                            element.color.setRGB(1, 1, 1)
+                        }
+
+                    })
+                    mesh.geometry.colorsNeedUpdate = true
+                }
+
    			  	function init(){
      	        console.log(window.innerWidth,window.innerHeight);
      	        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 1e10 );
@@ -546,7 +596,7 @@ class Overlay(ViewerBase):
                  						geometry.__dirtyColors = true;
 							
                  						material=new THREE.MeshLambertMaterial({vertexColors: THREE.FaceColors});
-                 						var color = [Math.random(), Math.random(), Math.random()]
+                 						// var color = [Math.random(), Math.random(), Math.random()]
 						    			//console.log("hello")
                  						/*for (i=0;i<geometry.faces.length;i++){
                  							var face = geometry.faces[i];
@@ -566,7 +616,9 @@ class Overlay(ViewerBase):
  		                                mesh.rotation.z = Math.PI * 1.5;
  		                                mesh.anisha_opts = MeshOpts[mesh.name]
 	
-                                        color_brain(mesh)
+                                        // calculate face_metrics once, and after calculations for all
+                                        // keys are done, color brain.
+                                        calculateFaceMetrics(mesh, color_brain)
                                         initialize_gui(mesh)
                                         
                  						
@@ -627,7 +679,11 @@ class Overlay(ViewerBase):
              </script>
 
            </body>
-         </html>        """
+         </html>
+
+     
+  
+                """
         
         html = html.replace("IPYTHON_NOTEBOOK_DICTIONARY", json(self._javascript_object))
         file = NamedTemporaryFile(suffix=".html", dir="papaya_data")
