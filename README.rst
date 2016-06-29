@@ -9,15 +9,15 @@ Install
 
 Clone this repository to your computer, 
 
-```
-git clone https://github.com/akeshavan/nbpapaya
-```
+
+>>> git clone https://github.com/akeshavan/nbpapaya
+
 
 then add submodules
 
-```
-git submodule update --init --recursive
-```
+
+>>> git submodule update --init --recursive
+
 
 and run the setup script.
 
