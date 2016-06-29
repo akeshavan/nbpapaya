@@ -7,7 +7,19 @@ Want to see 3D brain data in the IPython_ notebook? Now you can by using Papaya_
 Install
 -------
 
-Clone this repository to your computer, and run the setup script.
+Clone this repository to your computer, 
+
+```
+git clone https://github.com/akeshavan/nbpapaya
+```
+
+then add submodules
+
+```
+git submodule update --init --recursive
+```
+
+and run the setup script.
 
 >>> python setup.py
 
