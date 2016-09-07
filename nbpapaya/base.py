@@ -9,7 +9,7 @@ from .brain_view import split_filename, _parse_options, open_brains
 class ViewerBase(object):
 
     def _repr_html_(self):
-        return """<iframe src="http://%s:%d/files/papaya_data/%s.html"
+        return """<iframe src="%s:%d/files/papaya_data/%s.html"
                    width="%d"
                    height="%d"
                    scrolling="no"
@@ -61,7 +61,7 @@ class ViewerBase(object):
         return tmp_files, mapper    
             
     def __init__(self, fnames, port=8888, num=None, options=None, image_options=None,
-                 width=600, height=450, host="localhost"):
+                 width=600, height=450, host="http://localhost"):
         self._html_file = None
         self.file_names = {}
         if not isinstance(fnames, list):
