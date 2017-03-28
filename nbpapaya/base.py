@@ -24,7 +24,7 @@ class ViewerBase(object):
             </iframe>""".format(objid = self.objid, width = self.width, height = self.height)
 
     def _do_checks(self):
-        print "doing checks", self.home_dir
+        print("doing checks", self.home_dir)
         if not os.path.exists(os.path.join(self.home_dir,"papaya.js")):
             shutil.copyfile(os.path.join(os.path.split(__file__)[0],"Papaya/release/current/minimal/papaya.js"),
             os.path.join(self.home_dir,"papaya.js"))
