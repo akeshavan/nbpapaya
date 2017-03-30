@@ -13,7 +13,7 @@ class ViewerBase(object):
             <script type="text/javascript">
                 var nb_port = window.location.port;
                 var iframe = document.querySelector('iframe#{objid}');
-                iframe.src="http://localhost:" + nb_port + "/files/papaya_data/{objid}.html";
+                iframe.src="http://"+window.location.hostname+":" + nb_port + "/files/papaya_data/{objid}.html";
             </script>
             <iframe
             id="{objid}"
