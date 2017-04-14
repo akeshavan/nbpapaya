@@ -21,7 +21,7 @@ then add submodules
 
 and run the setup script.
 
->>> python setup.py
+>>> python setup.py install
 
 
 Use
