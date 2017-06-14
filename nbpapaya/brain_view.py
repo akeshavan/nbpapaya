@@ -71,7 +71,7 @@ def _parse_options(file_names, options, image_options):
         image_options_json = ""
     else:
         opt = []
-        for file, image_options in zip(file_names, image_options):
+        for file, image_options in zip(sorted(file_names), image_options):
             line = "params['{}'] = {};".format(file, json(image_options))
             opt.append(line)
         image_options_json = "\n".join(opt)
@@ -89,12 +89,9 @@ def get_example_data():
     nifti = ""
     from subprocess import check_call
     import os
-    
+
     folder = os.path.abspath("nppapaya_example_data")
     if not os.path.exists(folder):
         os.makedirs(folder)
     cmd = ["wget", vtk]
     check_call(cmd, cwd=folder)
-    
-    
-
