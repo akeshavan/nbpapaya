@@ -10,18 +10,18 @@ class ViewerBase(object):
 
     def _repr_html_(self):
         return """
-            <script type="text/javascript">
-                var nb_port = window.location.port;
-                var iframe = document.querySelector('iframe#{objid}');
-                iframe.src="http://"+window.location.hostname+":" + nb_port + "/files/papaya_data/{objid}.html";
-            </script>
             <iframe
             id="{objid}"
             width="{width}"
             height="{height}"
             scrolling="no"
             frameBorder="0">
-            </iframe>""".format(objid = self.objid, width = self.width, height = self.height)
+            </iframe>
+            <script type="text/javascript">
+                var nb_port = window.location.port;
+                var iframe = document.querySelector('iframe#{objid}');
+                iframe.src="http://"+window.location.hostname+":" + nb_port + "/files/papaya_data/{objid}.html";
+            </script>""".format(objid=self.objid, width=self.width, height=self.height)
 
     def _do_checks(self):
         print("doing checks", self.home_dir)
@@ -54,9 +54,9 @@ class ViewerBase(object):
     def _symlink_files(self, fnames):
         tmp_files = {}
         mapper = {}
-        for i,f in enumerate(fnames):
+        for i, f in enumerate(fnames):
             path, name, ext = split_filename(f)
-            link = mktemp(suffix=ext, dir="papaya_data")
+            link = mktemp(prefix='tmp%02d' % i, suffix=ext, dir="papaya_data")
             os.symlink(f, link)
             _, name, _ = split_filename(link)
             #self.file_names[name + ext] = link
@@ -157,7 +157,7 @@ class Brain(ViewerBase):
         </body>
     </html>
             """
-            html = html.format(images=json(list(self.file_names.keys())),
+            html = html.format(images=json(sorted(list(self.file_names.keys()))),
                                options=opt_json,
                                image_options=imgopt_json)
 
