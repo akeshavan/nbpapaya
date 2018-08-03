@@ -1,22 +1,21 @@
-=======
-UPDATE
-=======
+# UPDATE
+
 
 This is old now. Use nilearn's plotting library for this!!
 
-.. code-block:: python
+```python
    from nilearn import plotting
    plotting.view_stat_map("/path/to/file")
+```
 
 
-======
-README
-======
+# README
+
 
 Want to see 3D brain data in the IPython_ notebook? Now you can by using Papaya_, a Javascript library for viewing medical images in the browser, and this little bit of code.
 
-Install
--------
+## Install
+
 
 Clone this repository to your computer, 
 
