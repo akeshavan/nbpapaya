@@ -4,12 +4,10 @@ UPDATE
 
 This is old now. Use nilearn's plotting library for this!!
 
-```python
+.. code-block:: python
+   from nilearn import plotting
+   plotting.view_stat_map("/path/to/file")
 
-from nilearn import plotting
-plotting.view_stat_map("/path/to/file")
-
-```
 
 ======
 README
